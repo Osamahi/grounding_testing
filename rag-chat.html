@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Engine Chat with Reranking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 18px;
+        }
+
+        .config {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .config input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .config-row {
+            margin-bottom: 10px;
+        }
+
+        .config label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .form-row {
+            margin-bottom: 12px;
+        }
+
+        .form-row label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .form-row input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .form-row small {
+            color: #666;
+            font-size: 11px;
+            display: block;
+            margin-top: 3px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #357ae8;
+        }
+
+        button.success {
+            background: #0f9d58;
+        }
+
+        button.success:hover {
+            background: #0d8c4f;
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #fafafa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #4285f4;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.ai {
+            background: white;
+            border: 1px solid #ddd;
+        }
+
+        .message .label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+
+        .grounding-source {
+            font-size: 11px;
+            margin-top: 8px;
+            padding: 8px;
+            background: #f0f0f0;
+            border-left: 3px solid #4285f4;
+            border-radius: 4px;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #4285f4;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RAG Engine Chat with Reranking</h1>
+        <p style="color: #666; font-size: 13px; margin-bottom: 20px;">
+            Testing RAG Store with semantic reranking for improved Arabic-English retrieval
+        </p>
+
+        <!-- Configuration -->
+        <div class="config">
+            <div class="config-row">
+                <label>Project Number:</label>
+                <input type="text" id="projectNumber" value="470233234969">
+            </div>
+            <div class="config-row">
+                <label>Project ID:</label>
+                <input type="text" id="projectId" value="mojeeb">
+            </div>
+            <div class="config-row">
+                <label>Location:</label>
+                <input type="text" id="location" value="us-central1">
+            </div>
+            <div class="config-row">
+                <label>Access Token:</label>
+                <input type="text" id="accessToken" value="">
+            </div>
+        </div>
+
+        <!-- Create RAG Corpus -->
+        <div class="section">
+            <h2>1. Create RAG Corpus</h2>
+            <div class="form-row">
+                <label>Corpus ID:</label>
+                <input type="text" id="corpusId" placeholder="my-rag-corpus">
+                <small>Lowercase letters, numbers, and hyphens only</small>
+            </div>
+            <div class="form-row">
+                <label>Display Name:</label>
+                <input type="text" id="corpusDisplayName" placeholder="My RAG Corpus">
+            </div>
+            <button class="success" onclick="createCorpus()">Create Corpus</button>
+            <div id="corpusStatus" class="status"></div>
+        </div>
+
+        <!-- Upload Document -->
+        <div class="section">
+            <h2>2. Upload Document to Corpus</h2>
+            <div class="form-row">
+                <label>Corpus ID (from above):</label>
+                <input type="text" id="uploadCorpusId" placeholder="my-rag-corpus">
+            </div>
+            <div class="form-row">
+                <label>Document File:</label>
+                <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx">
+            </div>
+            <button onclick="uploadToRag()">Upload to RAG Corpus</button>
+            <div id="uploadStatus" class="status"></div>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="section">
+            <h2>3. Chat with Grounding + Reranking</h2>
+            <div class="form-row">
+                <label>Corpus ID (from above):</label>
+                <input type="text" id="chatCorpusId" placeholder="my-rag-corpus">
+            </div>
+            <div class="info-box">
+                <strong>Testing:</strong> Try Arabic queries on English documents. Reranking should improve consistency!
+            </div>
+            <div class="messages" id="messages">
+                <div style="text-align: center; color: #999; padding: 50px;">
+                    Upload a document and start chatting!
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Ask a question in Arabic or English..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function createCorpus() {
+            const corpusId = document.getElementById('corpusId').value.trim();
+            const displayName = document.getElementById('corpusDisplayName').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const accessToken = document.getElementById('accessToken').value.trim();
+
+            if (!corpusId || !displayName) {
+                showCorpusStatus('Please enter corpus ID and display name', 'error');
+                return;
+            }
+
+            if (!accessToken) {
+                showCorpusStatus('Please enter access token', 'error');
+                return;
+            }
+
+            showCorpusStatus('Creating RAG corpus...', 'success');
+
+            try {
+                const url = `https://aiplatform.googleapis.com/v1beta1/projects/${projectId}/locations/${location}/ragCorpora?ragCorpusId=${corpusId}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'X-Goog-User-Project': projectId
+                    },
+                    body: JSON.stringify({
+                        displayName: displayName,
+                        description: "RAG corpus for testing Arabic-English retrieval with reranking"
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('Failed to create corpus: ' + errorText);
+                }
+
+                const result = await response.json();
+                showCorpusStatus(`✓ Corpus "${corpusId}" created successfully!`, 'success');
+
+                // Auto-fill in other forms
+                document.getElementById('uploadCorpusId').value = corpusId;
+                document.getElementById('chatCorpusId').value = corpusId;
+
+            } catch (error) {
+                showCorpusStatus('Error: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+
+        async function uploadToRag() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const corpusId = document.getElementById('uploadCorpusId').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const accessToken = document.getElementById('accessToken').value.trim();
+
+            if (!file) {
+                showUploadStatus('Please select a file', 'error');
+                return;
+            }
+
+            if (!corpusId) {
+                showUploadStatus('Please enter corpus ID', 'error');
+                return;
+            }
+
+            if (!accessToken) {
+                showUploadStatus('Please enter access token', 'error');
+                return;
+            }
+
+            showUploadStatus('Uploading to GCS...', 'success');
+
+            try {
+                // Step 1: Upload to GCS
+                const bucketName = 'mojeeb_test_bucket';
+                const fileName = `rag-doc-${Date.now()}-${file.name}`;
+                const gcsUploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${bucketName}/o?uploadType=media&name=${fileName}`;
+
+                const gcsResponse = await fetch(gcsUploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': file.type || 'application/octet-stream'
+                    },
+                    body: file
+                });
+
+                if (!gcsResponse.ok) {
+                    throw new Error('Failed to upload to GCS: ' + await gcsResponse.text());
+                }
+
+                showUploadStatus('Importing to RAG corpus...', 'success');
+
+                // Step 2: Import to RAG Corpus
+                const importUrl = `https://aiplatform.googleapis.com/v1beta1/projects/${projectId}/locations/${location}/ragCorpora/${corpusId}/ragFiles:import`;
+
+                const importResponse = await fetch(importUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'X-Goog-User-Project': projectId
+                    },
+                    body: JSON.stringify({
+                        ragFile: {
+                            gcsSource: {
+                                uris: [`gs://${bucketName}/${fileName}`]
+                            },
+                            displayName: file.name
+                        }
+                    })
+                });
+
+                if (!importResponse.ok) {
+                    throw new Error('Failed to import: ' + await importResponse.text());
+                }
+
+                const result = await importResponse.json();
+                showUploadStatus('✓ Document uploaded and indexed successfully!', 'success');
+
+            } catch (error) {
+                showUploadStatus('Error: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            const corpusId = document.getElementById('chatCorpusId').value.trim();
+            const projectNumber = document.getElementById('projectNumber').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const accessToken = document.getElementById('accessToken').value.trim();
+
+            if (!accessToken) {
+                alert('Please enter access token');
+                return;
+            }
+
+            if (!corpusId) {
+                alert('Please enter corpus ID');
+                return;
+            }
+
+            // Clear input and show user message
+            messageInput.value = '';
+            addMessage('user', message);
+
+            // Show loading
+            const loadingId = 'loading-' + Date.now();
+            addMessage('ai', 'Thinking with reranking...', loadingId);
+
+            try {
+                const response = await fetch(
+                    `https://us-central1-aiplatform.googleapis.com/v1beta1/projects/${projectNumber}/locations/us-central1/publishers/google/models/gemini-2.5-flash:generateContent`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json; charset=utf-8',
+                            'X-Goog-User-Project': projectId
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                role: 'user',
+                                parts: [{
+                                    text: message
+                                }]
+                            }],
+                            tools: [{
+                                retrieval: {
+                                    vertexRagStore: {
+                                        ragResources: [{
+                                            ragCorpus: `projects/${projectNumber}/locations/${location}/ragCorpora/${corpusId}`
+                                        }],
+                                        ragRetrievalConfig: {
+                                            topK: 10,
+                                            ranking: {
+                                                rankService: {
+                                                    modelName: "semantic-ranker-512@latest"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }]
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('API Error: ' + await response.text());
+                }
+
+                const data = await response.json();
+
+                // Remove loading message
+                document.getElementById(loadingId)?.remove();
+
+                // Display response
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+                const groundingMetadata = data.candidates?.[0]?.groundingMetadata;
+
+                let responseHtml = aiText;
+
+                // Add grounding sources
+                if (groundingMetadata?.groundingChunks?.length > 0) {
+                    responseHtml += '<div class="grounding-source">';
+                    responseHtml += '<strong>Sources (with reranking):</strong><br>';
+                    groundingMetadata.groundingChunks.forEach((chunk, idx) => {
+                        const uri = chunk.retrievedContext?.uri || 'Unknown';
+                        const title = chunk.retrievedContext?.title || 'Document';
+                        responseHtml += `${idx + 1}. ${title} (${uri})<br>`;
+                    });
+                    responseHtml += '</div>';
+                } else {
+                    responseHtml += '<div class="grounding-source" style="background: #fff3cd; border-left-color: #ffc107;">No grounding sources found</div>';
+                }
+
+                addMessage('ai', responseHtml);
+
+            } catch (error) {
+                document.getElementById(loadingId)?.remove();
+                addMessage('ai', 'Error: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        function addMessage(type, text, id = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            if (id) messageDiv.id = id;
+
+            const label = type === 'user' ? 'You' : 'AI (RAG + Reranking)';
+            messageDiv.innerHTML = `
+                <div class="label">${label}</div>
+                <div>${text}</div>
+            `;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showCorpusStatus(message, type) {
+            const statusDiv = document.getElementById('corpusStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function showUploadStatus(message, type) {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+    </script>
+</body>
+</html>
