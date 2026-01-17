@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vertex AI Data Stores Console</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .config-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .config-item label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .config-item input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: monospace;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4285f4;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #357ae8;
+        }
+
+        .btn-success {
+            background: #34a853;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2d9348;
+        }
+
+        .btn-danger {
+            background: #ea4335;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d33b2d;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4285f4;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .datastores-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .search-bar {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+            font-size: 14px;
+        }
+
+        .datastore-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+        }
+
+        .datastore-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .datastore-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #4285f4;
+        }
+
+        .datastore-card.selected {
+            border-color: #4285f4;
+            background: #f0f7ff;
+        }
+
+        .datastore-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .datastore-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .datastore-id {
+            font-size: 11px;
+            color: #666;
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .datastore-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .meta-label {
+            color: #666;
+        }
+
+        .meta-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge-chat {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-search {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4285f4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 4px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .refresh-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .refresh-indicator.refreshing {
+            color: #4285f4;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .datastore-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🗄️ Vertex AI Data Stores Console</h1>
+            <p class="subtitle">Manage your Discovery Engine data stores for grounding</p>
+        </div>
+
+        <!-- Configuration -->
+        <div class="config-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>Configuration</h3>
+                <button class="btn btn-success" onclick="loadDataStores()">
+                    <span id="refreshIcon">🔄</span> Refresh
+                </button>
+            </div>
+            <div class="config-grid">
+                <div class="config-item">
+                    <label>Project ID:</label>
+                    <input type="text" id="projectId" value="mojeeb">
+                </div>
+                <div class="config-item">
+                    <label>Project Number:</label>
+                    <input type="text" id="projectNumber" value="470233234969">
+                </div>
+                <div class="config-item">
+                    <label>Access Token:</label>
+                    <input type="text" id="accessToken" placeholder="Paste your access token here">
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertContainer"></div>
+
+        <!-- Stats -->
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-value" id="totalDataStores">0</div>
+                <div class="stat-label">Total Data Stores</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="chatDataStores">0</div>
+                <div class="stat-label">Chat Data Stores</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="searchDataStores">0</div>
+                <div class="stat-label">Search Data Stores</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalDocuments">-</div>
+                <div class="stat-label">Total Documents</div>
+            </div>
+        </div>
+
+        <!-- Data Stores Section -->
+        <div class="datastores-section">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">Data Stores</div>
+                    <div id="refreshIndicator" class="refresh-indicator" style="margin-top: 5px;"></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" class="search-bar" id="searchInput" placeholder="Search data stores..." onkeyup="filterDataStores()">
+                    <button class="btn btn-primary" onclick="showCreateModal()">+ Create Data Store</button>
+                </div>
+            </div>
+
+            <div id="datastoresContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Loading data stores...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Data Store Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Create New Data Store</div>
+            <form id="createForm" onsubmit="createDataStore(event)">
+                <div class="form-group">
+                    <label>Data Store ID *</label>
+                    <input type="text" id="newDatastoreId" required pattern="[a-z0-9-]+" placeholder="my-datastore-123">
+                    <small>Lowercase letters, numbers, and hyphens only</small>
+                </div>
+                <div class="form-group">
+                    <label>Display Name *</label>
+                    <input type="text" id="newDisplayName" required placeholder="My Data Store">
+                </div>
+                <div class="form-group">
+                    <label>Industry Vertical</label>
+                    <select id="newIndustryVertical">
+                        <option value="GENERIC">Generic</option>
+                        <option value="RETAIL">Retail</option>
+                        <option value="MEDIA">Media</option>
+                        <option value="HEALTHCARE">Healthcare</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Solution Type</label>
+                    <select id="newSolutionType">
+                        <option value="SOLUTION_TYPE_CHAT">Chat (Conversational)</option>
+                        <option value="SOLUTION_TYPE_SEARCH">Search</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Content Config</label>
+                    <select id="newContentConfig">
+                        <option value="CONTENT_REQUIRED">Content Required (With Documents)</option>
+                        <option value="PUBLIC_WEBSITE">Public Website</option>
+                        <option value="NO_CONTENT">No Content</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="hideCreateModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let allDataStores = [];
+        let selectedDataStore = null;
+
+        // Auto-load on page load
+        window.addEventListener('load', () => {
+            const accessToken = document.getElementById('accessToken').value.trim();
+            if (accessToken) {
+                loadDataStores();
+            } else {
+                showAlert('Please enter your access token to continue', 'warning');
+            }
+        });
+
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 300);
+            }, 5000);
+        }
+
+        function setRefreshIndicator(text, isRefreshing = false) {
+            const indicator = document.getElementById('refreshIndicator');
+            indicator.textContent = text;
+            indicator.className = `refresh-indicator ${isRefreshing ? 'refreshing' : ''}`;
+        }
+
+        async function loadDataStores() {
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+
+            if (!accessToken) {
+                showAlert('Please enter access token', 'error');
+                return;
+            }
+
+            const container = document.getElementById('datastoresContainer');
+            const refreshIcon = document.getElementById('refreshIcon');
+
+            // Show loading
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Loading data stores...</div>
+                </div>
+            `;
+
+            refreshIcon.textContent = '⏳';
+            setRefreshIndicator('Refreshing...', true);
+
+            try {
+                const response = await fetch(
+                    `https://discoveryengine.googleapis.com/v1/projects/${projectId}/locations/global/collections/default_collection/dataStores`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'X-Goog-User-Project': projectId
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                allDataStores = data.dataStores || [];
+
+                displayDataStores(allDataStores);
+                updateStats(allDataStores);
+
+                const timestamp = new Date().toLocaleTimeString();
+                setRefreshIndicator(`Last updated: ${timestamp}`, false);
+                refreshIcon.textContent = '🔄';
+
+                showAlert(`Loaded ${allDataStores.length} data store(s)`, 'success');
+
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <div>Error loading data stores</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #666;">${error.message}</div>
+                    </div>
+                `;
+                showAlert('Failed to load data stores: ' + error.message, 'error');
+                refreshIcon.textContent = '🔄';
+                setRefreshIndicator('Error loading', false);
+            }
+        }
+
+        function displayDataStores(dataStores) {
+            const container = document.getElementById('datastoresContainer');
+            document.getElementById('stats').style.display = 'grid';
+
+            if (dataStores.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <div>No data stores found</div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-primary" onclick="showCreateModal()">Create Your First Data Store</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = dataStores.map(ds => {
+                const datastoreId = ds.name.split('/').pop();
+                const displayName = ds.displayName || datastoreId;
+                const createTime = new Date(ds.createTime).toLocaleString();
+                const solutionType = ds.solutionTypes?.[0] || 'N/A';
+                const isChat = solutionType === 'SOLUTION_TYPE_CHAT';
+                const badgeClass = isChat ? 'badge-chat' : 'badge-search';
+                const badgeText = isChat ? 'Chat' : 'Search';
+
+                const dataSize = ds.billingEstimation?.unstructuredDataSize || '0';
+                const dataSizeKB = (parseInt(dataSize) / 1024).toFixed(2);
+
+                return `
+                    <div class="datastore-card" onclick="selectDataStore('${datastoreId}')">
+                        <div class="datastore-header">
+                            <div style="flex: 1;">
+                                <div class="datastore-name">${displayName}</div>
+                                <div class="datastore-id">${datastoreId}</div>
+                            </div>
+                            <span class="badge ${badgeClass}">${badgeText}</span>
+                        </div>
+                        <div class="datastore-meta">
+                            <div class="meta-row">
+                                <span class="meta-label">Created:</span>
+                                <span class="meta-value">${createTime}</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-label">Industry:</span>
+                                <span class="meta-value">${ds.industryVertical || 'N/A'}</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-label">Data Size:</span>
+                                <span class="meta-value">${dataSizeKB} KB</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-label">Content:</span>
+                                <span class="meta-value">${ds.contentConfig || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="datastore-actions">
+                            <button class="btn btn-sm btn-primary" onclick="viewDocuments(event, '${datastoreId}')">📄 Documents</button>
+                            <button class="btn btn-sm" onclick="copyResourceName(event, '${ds.name}')">📋 Copy Name</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `<div class="datastore-grid">${html}</div>`;
+        }
+
+        function updateStats(dataStores) {
+            document.getElementById('totalDataStores').textContent = dataStores.length;
+
+            const chatStores = dataStores.filter(ds => ds.solutionTypes?.[0] === 'SOLUTION_TYPE_CHAT').length;
+            const searchStores = dataStores.filter(ds => ds.solutionTypes?.[0] === 'SOLUTION_TYPE_SEARCH').length;
+
+            document.getElementById('chatDataStores').textContent = chatStores;
+            document.getElementById('searchDataStores').textContent = searchStores;
+
+            // Calculate total documents (if billing estimation is available)
+            const totalDocs = dataStores.reduce((sum, ds) => {
+                const size = parseInt(ds.billingEstimation?.unstructuredDataSize || 0);
+                return sum + (size > 0 ? 1 : 0); // Rough estimate
+            }, 0);
+
+            document.getElementById('totalDocuments').textContent = totalDocs > 0 ? totalDocs : '-';
+        }
+
+        function filterDataStores() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allDataStores.filter(ds => {
+                const datastoreId = ds.name.split('/').pop();
+                const displayName = ds.displayName || datastoreId;
+                return displayName.toLowerCase().includes(searchTerm) ||
+                       datastoreId.toLowerCase().includes(searchTerm);
+            });
+            displayDataStores(filtered);
+        }
+
+        function selectDataStore(datastoreId) {
+            selectedDataStore = datastoreId;
+            // Could expand to show details panel
+        }
+
+        function viewDocuments(event, datastoreId) {
+            event.stopPropagation();
+            showAlert(`Opening documents for: ${datastoreId}`, 'success');
+            // Could open modal or navigate to documents view
+            const projectId = document.getElementById('projectId').value.trim();
+            const url = `https://console.cloud.google.com/gen-app-builder/locations/global/data-stores/${datastoreId}?project=${projectId}`;
+            window.open(url, '_blank');
+        }
+
+        function copyResourceName(event, resourceName) {
+            event.stopPropagation();
+            navigator.clipboard.writeText(resourceName).then(() => {
+                showAlert('Resource name copied to clipboard!', 'success');
+            }).catch(() => {
+                showAlert('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        function showCreateModal() {
+            document.getElementById('createModal').classList.add('show');
+        }
+
+        function hideCreateModal() {
+            document.getElementById('createModal').classList.remove('show');
+            document.getElementById('createForm').reset();
+        }
+
+        async function createDataStore(event) {
+            event.preventDefault();
+
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+            const datastoreId = document.getElementById('newDatastoreId').value.trim();
+            const displayName = document.getElementById('newDisplayName').value.trim();
+            const industryVertical = document.getElementById('newIndustryVertical').value;
+            const solutionType = document.getElementById('newSolutionType').value;
+            const contentConfig = document.getElementById('newContentConfig').value;
+
+            if (!accessToken) {
+                showAlert('Please enter access token', 'error');
+                return;
+            }
+
+            showAlert('Creating data store...', 'success');
+
+            try {
+                const response = await fetch(
+                    `https://discoveryengine.googleapis.com/v1/projects/${projectId}/locations/global/collections/default_collection/dataStores?dataStoreId=${datastoreId}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                            'X-Goog-User-Project': projectId
+                        },
+                        body: JSON.stringify({
+                            displayName: displayName,
+                            industryVertical: industryVertical,
+                            solutionTypes: [solutionType],
+                            contentConfig: contentConfig
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
+                }
+
+                showAlert(`Data store "${datastoreId}" created successfully!`, 'success');
+                hideCreateModal();
+
+                // Reload data stores after 2 seconds
+                setTimeout(() => loadDataStores(), 2000);
+
+            } catch (error) {
+                showAlert('Failed to create data store: ' + error.message, 'error');
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // ESC to close modal
+            if (e.key === 'Escape') {
+                hideCreateModal();
+            }
+            // Cmd/Ctrl + K to focus search
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            // Cmd/Ctrl + R to refresh
+            if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
+                e.preventDefault();
+                loadDataStores();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vertex AI Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #357ae8;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        /* Chat Section */
+        .chat-section {
+            margin-top: 20px;
+        }
+
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #fafafa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #4285f4;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.ai {
+            background: white;
+            border: 1px solid #ddd;
+        }
+
+        .message .label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+
+        .grounding-source {
+            font-size: 11px;
+            margin-top: 8px;
+            padding: 8px;
+            background: #f0f0f0;
+            border-left: 3px solid #4285f4;
+            border-radius: 4px;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+
+        .config {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .config input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .config-row {
+            margin-bottom: 10px;
+        }
+
+        .config label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        /* Documents List */
+        .documents-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .documents-list {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .document-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .document-item:last-child {
+            border-bottom: none;
+        }
+
+        .document-item:hover {
+            background: #f9f9f9;
+        }
+
+        .document-info {
+            flex: 1;
+        }
+
+        .document-id {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .document-uri {
+            color: #666;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .document-time {
+            color: #999;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .refresh-btn:hover {
+            background: #218838;
+        }
+
+        /* Create DataStore Section */
+        .create-datastore-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .form-row {
+            margin-bottom: 12px;
+        }
+
+        .form-row label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .form-row input[type="text"],
+        .form-row select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .form-row small {
+            color: #666;
+            font-size: 11px;
+            display: block;
+            margin-top: 3px;
+        }
+
+        .create-btn {
+            background: #0f9d58;
+            margin-top: 10px;
+        }
+
+        .create-btn:hover {
+            background: #0d8c4f;
+        }
+
+        /* Data Store Selection */
+        .datastore-select-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .datastore-dropdown {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-top: 10px;
+            background: white;
+        }
+
+        .datastore-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f4f8;
+            border-left: 4px solid #4285f4;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .datastore-info strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vertex AI Chat with Grounding</h1>
+
+        <!-- Configuration -->
+        <div class="config">
+            <div class="config-row">
+                <label>Project Number:</label>
+                <input type="text" id="projectNumber" value="470233234969">
+            </div>
+            <div class="config-row">
+                <label>Project ID:</label>
+                <input type="text" id="projectId" value="mojeeb">
+            </div>
+            <div class="config-row">
+                <label>Access Token:</label>
+                <input type="text" id="accessToken" value="">
+            </div>
+        </div>
+
+        <!-- Create DataStore Section -->
+        <div class="create-datastore-section">
+            <h2>Create Data Store</h2>
+            <div style="margin-top: 15px;">
+                <div class="form-row">
+                    <label>Data Store ID:</label>
+                    <input type="text" id="newDatastoreId" placeholder="my-datastore-id">
+                    <small>Lowercase letters, numbers, and hyphens only</small>
+                </div>
+                <div class="form-row">
+                    <label>Display Name:</label>
+                    <input type="text" id="newDatastoreDisplayName" placeholder="My DataStore">
+                </div>
+                <div class="form-row">
+                    <label>Industry Vertical:</label>
+                    <select id="newDatastoreIndustry">
+                        <option value="GENERIC">Generic</option>
+                        <option value="RETAIL">Retail</option>
+                        <option value="MEDIA">Media</option>
+                        <option value="HEALTHCARE">Healthcare</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Content Config:</label>
+                    <select id="newDatastoreContentConfig">
+                        <option value="CONTENT_REQUIRED">Content Required (With Documents)</option>
+                        <option value="PUBLIC_WEBSITE">Public Website</option>
+                        <option value="NO_CONTENT">No Content</option>
+                    </select>
+                </div>
+                <button class="create-btn" onclick="createDataStore()">Create Data Store</button>
+            </div>
+            <div id="createDatastoreStatus" class="status"></div>
+        </div>
+
+        <!-- Data Store Selection Section -->
+        <div class="datastore-select-section">
+            <h2>Select Data Store</h2>
+            <select class="datastore-dropdown" id="datastoreSelect" onchange="onDataStoreChange()">
+                <option value="">Loading data stores...</option>
+            </select>
+            <div class="datastore-info" id="datastoreInfo" style="display: none;">
+                <strong>Selected:</strong> <span id="selectedDatastoreName"></span><br>
+                <strong>ID:</strong> <span id="selectedDatastoreId"></span>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h2>Upload Document</h2>
+            <div style="margin-top: 15px;">
+                <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx">
+                <button onclick="uploadDocument()">Upload to Vertex AI</button>
+            </div>
+            <div id="uploadStatus" class="status"></div>
+        </div>
+
+        <!-- Documents List Section -->
+        <div class="documents-section">
+            <h2>
+                Documents
+                <button class="refresh-btn" onclick="listDocuments()">↻ Refresh</button>
+            </h2>
+            <div class="documents-list" id="documentsList">
+                <div class="empty-state">Loading documents...</div>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="chat-section">
+            <h2>Chat</h2>
+            <div class="messages" id="messages">
+                <div style="text-align: center; color: #999; padding: 50px;">
+                    Upload a document and start chatting!
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Ask a question..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const uploadStatusDiv = document.getElementById('uploadStatus');
+        const createDatastoreStatusDiv = document.getElementById('createDatastoreStatus');
+
+        let currentDataStores = [];
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function getSelectedDataStore() {
+            const select = document.getElementById('datastoreSelect');
+            return select.value;
+        }
+
+        async function listDataStores() {
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+
+            if (!accessToken) {
+                document.getElementById('datastoreSelect').innerHTML = '<option value="">Please enter access token</option>';
+                return;
+            }
+
+            try {
+                const listUrl = `https://discoveryengine.googleapis.com/v1/projects/${projectId}/locations/global/collections/default_collection/dataStores`;
+
+                const response = await fetch(listUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'X-Goog-User-Project': projectId
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to list data stores: ' + await response.text());
+                }
+
+                const data = await response.json();
+                currentDataStores = data.dataStores || [];
+                populateDataStoreDropdown(currentDataStores);
+
+            } catch (error) {
+                document.getElementById('datastoreSelect').innerHTML = '<option value="">Error loading data stores</option>';
+                console.error(error);
+            }
+        }
+
+        function populateDataStoreDropdown(dataStores) {
+            const select = document.getElementById('datastoreSelect');
+
+            if (dataStores.length === 0) {
+                select.innerHTML = '<option value="">No data stores available</option>';
+                return;
+            }
+
+            let html = '<option value="">-- Select a Data Store --</option>';
+            dataStores.forEach(ds => {
+                const datastoreId = ds.name.split('/').pop();
+                const displayName = ds.displayName || datastoreId;
+                html += `<option value="${datastoreId}" data-name="${displayName}">${displayName} (${datastoreId})</option>`;
+            });
+
+            select.innerHTML = html;
+        }
+
+        function onDataStoreChange() {
+            const datastoreId = getSelectedDataStore();
+            const select = document.getElementById('datastoreSelect');
+            const selectedOption = select.options[select.selectedIndex];
+
+            if (!datastoreId) {
+                document.getElementById('datastoreInfo').style.display = 'none';
+                document.getElementById('documentsList').innerHTML = '<div class="empty-state">Please select a data store</div>';
+                return;
+            }
+
+            const displayName = selectedOption.getAttribute('data-name') || datastoreId;
+
+            document.getElementById('datastoreInfo').style.display = 'block';
+            document.getElementById('selectedDatastoreName').textContent = displayName;
+            document.getElementById('selectedDatastoreId').textContent = datastoreId;
+
+            // Refresh documents list for the selected data store
+            listDocuments();
+        }
+
+        async function createDataStore() {
+            const datastoreId = document.getElementById('newDatastoreId').value.trim();
+            const displayName = document.getElementById('newDatastoreDisplayName').value.trim();
+            const industryVertical = document.getElementById('newDatastoreIndustry').value;
+            const contentConfig = document.getElementById('newDatastoreContentConfig').value;
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+
+            if (!datastoreId) {
+                showCreateDatastoreStatus('Please enter a Data Store ID', 'error');
+                return;
+            }
+
+            if (!displayName) {
+                showCreateDatastoreStatus('Please enter a Display Name', 'error');
+                return;
+            }
+
+            if (!accessToken) {
+                showCreateDatastoreStatus('Please enter access token', 'error');
+                return;
+            }
+
+            showCreateDatastoreStatus('Creating data store...', 'success');
+
+            try {
+                const createUrl = `https://discoveryengine.googleapis.com/v1/projects/${projectId}/locations/global/collections/default_collection/dataStores?dataStoreId=${datastoreId}`;
+
+                const response = await fetch(createUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'X-Goog-User-Project': projectId
+                    },
+                    body: JSON.stringify({
+                        displayName: displayName,
+                        industryVertical: industryVertical,
+                        solutionTypes: ['SOLUTION_TYPE_CHAT'],
+                        contentConfig: contentConfig
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('Failed to create data store: ' + errorText);
+                }
+
+                const result = await response.json();
+                showCreateDatastoreStatus(`Data store "${datastoreId}" created successfully! Refreshing list...`, 'success');
+
+                // Clear form
+                document.getElementById('newDatastoreId').value = '';
+                document.getElementById('newDatastoreDisplayName').value = '';
+
+                // Refresh data stores list and auto-select the new one
+                await listDataStores();
+                document.getElementById('datastoreSelect').value = datastoreId;
+                onDataStoreChange();
+
+            } catch (error) {
+                showCreateDatastoreStatus('Error: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+
+        function showCreateDatastoreStatus(message, type) {
+            createDatastoreStatusDiv.textContent = message;
+            createDatastoreStatusDiv.className = `status ${type}`;
+        }
+
+        async function pollOperationStatus(operationName, accessToken, projectId) {
+            const maxAttempts = 60; // Max 2 minutes (60 * 2 seconds)
+            let attempts = 0;
+
+            while (attempts < maxAttempts) {
+                try {
+                    const statusUrl = `https://discoveryengine.googleapis.com/v1/${operationName}`;
+
+                    const response = await fetch(statusUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'X-Goog-User-Project': projectId
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to check status: ' + await response.text());
+                    }
+
+                    const status = await response.json();
+
+                    // Check if operation is done
+                    if (status.done) {
+                        const successCount = status.metadata?.successCount || 0;
+                        const failureCount = status.metadata?.failureCount || 0;
+
+                        if (failureCount > 0) {
+                            showStatus(`Import completed with ${failureCount} failure(s). Check logs.`, 'error');
+                        } else {
+                            showStatus(`✓ Document indexed successfully! (${successCount} document(s))`, 'success');
+                        }
+
+                        // Refresh document list
+                        setTimeout(() => listDocuments(), 1000);
+                        return;
+                    }
+
+                    // Update status message with progress
+                    const updateTime = status.metadata?.updateTime || '';
+                    showStatus(`Indexing in progress... (${attempts * 2}s elapsed)`, 'success');
+
+                    // Wait 2 seconds before next poll
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    attempts++;
+
+                } catch (error) {
+                    showStatus('Error checking status: ' + error.message, 'error');
+                    console.error(error);
+                    return;
+                }
+            }
+
+            // Timeout
+            showStatus('⚠ Indexing is taking longer than expected. Check back later.', 'success');
+            setTimeout(() => listDocuments(), 1000);
+        }
+
+        async function uploadDocument() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showStatus('Please select a file', 'error');
+                return;
+            }
+
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+            const datastoreId = getSelectedDataStore();
+
+            if (!accessToken) {
+                showStatus('Please enter access token', 'error');
+                return;
+            }
+
+            if (!datastoreId) {
+                showStatus('Please select a data store first', 'error');
+                return;
+            }
+
+            showStatus('Uploading...', 'success');
+
+            try {
+                // Step 1: Upload to GCS (simplified - in production use signed URLs or backend)
+                const bucketName = 'mojeeb_test_bucket';
+                const fileName = `document-${Date.now()}-${file.name}`;
+
+                // Upload to GCS
+                const gcsUploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${bucketName}/o?uploadType=media&name=${fileName}`;
+
+                const gcsResponse = await fetch(gcsUploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': file.type || 'application/octet-stream'
+                    },
+                    body: file
+                });
+
+                if (!gcsResponse.ok) {
+                    throw new Error('Failed to upload to GCS: ' + await gcsResponse.text());
+                }
+
+                // Step 2: Create import JSONL
+                const documentId = `doc-${Date.now()}`;
+                const importData = {
+                    id: documentId,
+                    jsonData: "{}",
+                    content: {
+                        mimeType: file.type || 'text/plain',
+                        uri: `gs://${bucketName}/${fileName}`
+                    }
+                };
+
+                const jsonlContent = JSON.stringify(importData);
+                const jsonlFileName = `import-${Date.now()}.jsonl`;
+
+                const jsonlUploadUrl = `https://storage.googleapis.com/upload/storage/v1/b/${bucketName}/o?uploadType=media&name=${jsonlFileName}`;
+
+                await fetch(jsonlUploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/jsonl'
+                    },
+                    body: jsonlContent
+                });
+
+                // Step 3: Import to Vertex AI Search
+                const importUrl = `https://discoveryengine.googleapis.com/v1/projects/${projectId}/locations/global/collections/default_collection/dataStores/${datastoreId}/branches/default_branch/documents:import`;
+
+                const importResponse = await fetch(importUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'X-Goog-User-Project': projectId
+                    },
+                    body: JSON.stringify({
+                        gcsSource: {
+                            inputUris: [`gs://${bucketName}/${jsonlFileName}`],
+                            dataSchema: 'document'
+                        },
+                        reconciliationMode: 'INCREMENTAL'
+                    })
+                });
+
+                if (!importResponse.ok) {
+                    throw new Error('Failed to import: ' + await importResponse.text());
+                }
+
+                const result = await importResponse.json();
+                const operationName = result.name;
+
+                showStatus('Import started, indexing document...', 'success');
+
+                // Poll operation status
+                await pollOperationStatus(operationName, accessToken, projectId);
+
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+
+        async function listDocuments() {
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+            const datastoreId = getSelectedDataStore();
+
+            if (!accessToken) {
+                document.getElementById('documentsList').innerHTML = '<div class="empty-state">Please enter access token</div>';
+                return;
+            }
+
+            if (!datastoreId) {
+                document.getElementById('documentsList').innerHTML = '<div class="empty-state">Please select a data store</div>';
+                return;
+            }
+
+            try {
+                const listUrl = `https://discoveryengine.googleapis.com/v1/projects/${projectId}/locations/global/collections/default_collection/dataStores/${datastoreId}/branches/default_branch/documents`;
+
+                const response = await fetch(listUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'X-Goog-User-Project': projectId
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to list documents: ' + await response.text());
+                }
+
+                const data = await response.json();
+                displayDocuments(data.documents || []);
+
+            } catch (error) {
+                document.getElementById('documentsList').innerHTML = `<div class="empty-state">Error: ${error.message}</div>`;
+                console.error(error);
+            }
+        }
+
+        function displayDocuments(documents) {
+            const documentsList = document.getElementById('documentsList');
+
+            if (documents.length === 0) {
+                documentsList.innerHTML = '<div class="empty-state">No documents uploaded yet</div>';
+                return;
+            }
+
+            let html = '';
+            documents.forEach(doc => {
+                const fileName = doc.content.uri.split('/').pop();
+                const indexTime = new Date(doc.indexTime).toLocaleString();
+
+                html += `
+                    <div class="document-item">
+                        <div class="document-info">
+                            <div class="document-id">${doc.id}</div>
+                            <div class="document-uri">${fileName}</div>
+                            <div class="document-time">Indexed: ${indexTime}</div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteDocument('${doc.id}')">Delete</button>
+                    </div>
+                `;
+            });
+
+            documentsList.innerHTML = html;
+        }
+
+        async function deleteDocument(documentId) {
+            if (!confirm(`Delete document "${documentId}"?`)) {
+                return;
+            }
+
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+            const datastoreId = getSelectedDataStore();
+
+            if (!accessToken) {
+                alert('Please enter access token');
+                return;
+            }
+
+            if (!datastoreId) {
+                alert('Please select a data store first');
+                return;
+            }
+
+            try {
+                const deleteUrl = `https://discoveryengine.googleapis.com/v1/projects/${projectId}/locations/global/collections/default_collection/dataStores/${datastoreId}/branches/default_branch/documents/${documentId}`;
+
+                const response = await fetch(deleteUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'X-Goog-User-Project': projectId
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete: ' + await response.text());
+                }
+
+                alert(`Document "${documentId}" deleted successfully!`);
+                listDocuments(); // Refresh list
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // Load data stores on page load
+        window.addEventListener('load', () => {
+            listDataStores();
+        });
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const projectNumber = document.getElementById('projectNumber').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+            const datastoreId = getSelectedDataStore();
+
+            if (!accessToken) {
+                alert('Please enter access token');
+                return;
+            }
+
+            if (!datastoreId) {
+                alert('Please select a data store first');
+                return;
+            }
+
+            // Clear input and show user message
+            messageInput.value = '';
+            addMessage('user', message);
+
+            // Show loading
+            const loadingId = 'loading-' + Date.now();
+            addMessage('ai', 'Thinking...', loadingId);
+
+            try {
+                const response = await fetch(
+                    `https://us-central1-aiplatform.googleapis.com/v1beta1/projects/${projectNumber}/locations/us-central1/publishers/google/models/gemini-2.5-flash:generateContent`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json; charset=utf-8',
+                            'X-Goog-User-Project': projectId
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                role: 'user',
+                                parts: [{
+                                    text: message
+                                }]
+                            }],
+                            tools: [{
+                                retrieval: {
+                                    vertexAiSearch: {
+                                        datastore: `projects/${projectNumber}/locations/global/collections/default_collection/dataStores/${datastoreId}`
+                                    }
+                                }
+                            }]
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('API Error: ' + await response.text());
+                }
+
+                const data = await response.json();
+
+                // Remove loading message
+                document.getElementById(loadingId)?.remove();
+
+                // Display response
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+                const groundingChunks = data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+
+                let responseHtml = aiText;
+
+                // Add grounding sources
+                if (groundingChunks.length > 0) {
+                    responseHtml += '<div class="grounding-source">';
+                    responseHtml += '<strong>Sources:</strong><br>';
+                    groundingChunks.forEach((chunk, idx) => {
+                        const uri = chunk.retrievedContext?.uri || 'Unknown';
+                        const title = chunk.retrievedContext?.title || 'Document';
+                        responseHtml += `${idx + 1}. ${title} (${uri})<br>`;
+                    });
+                    responseHtml += '</div>';
+                }
+
+                addMessage('ai', responseHtml);
+
+            } catch (error) {
+                document.getElementById(loadingId)?.remove();
+                addMessage('ai', 'Error: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        function addMessage(type, text, id = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            if (id) messageDiv.id = id;
+
+            const label = type === 'user' ? 'You' : 'AI';
+            messageDiv.innerHTML = `
+                <div class="label">${label}</div>
+                <div>${text}</div>
+            `;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showStatus(message, type) {
+            uploadStatusDiv.textContent = message;
+            uploadStatusDiv.className = `status ${type}`;
+        }
+    </script>
+</body>
+</html>

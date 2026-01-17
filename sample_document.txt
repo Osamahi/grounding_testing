@@ -1,0 +1,47 @@
+Mojeeb AI Platform - Product Documentation
+
+Overview:
+Mojeeb is an advanced AI platform that provides intelligent conversational capabilities powered by Google's Gemini models. The platform specializes in Arabic language processing and offers enterprise-grade features for businesses.
+
+Key Features:
+1. Multi-Model Support: Mojeeb supports multiple Gemini model variants including Gemini 1.5 Flash, Gemini 1.5 Pro, and Gemini 2.0 Flash.
+
+2. Grounding Capabilities:
+   - Web Search Grounding: Allows the AI to access real-time information from the web
+   - Vertex AI Search Grounding: Enables grounding with custom document repositories
+   - Dynamic Content Retrieval: Automatically fetches relevant information based on queries
+
+3. Arabic Language Excellence:
+   - Native Arabic language understanding
+   - Cultural context awareness
+   - Dialectal variations support
+   - Right-to-left text handling
+
+4. Enterprise Features:
+   - Secure API access
+   - Custom data store integration
+   - Role-based access control
+   - Audit logging and compliance
+
+Technical Specifications:
+- API Endpoint: https://api.mojeeb.ai
+- Supported Regions: us-central1, europe-west1, asia-northeast1
+- Maximum Token Limit: 2 million tokens for Gemini 1.5 Pro
+- Response Time: Average 500ms for standard queries
+
+Pricing Information:
+- Starter Plan: $99/month - 10,000 API calls
+- Professional Plan: $299/month - 50,000 API calls
+- Enterprise Plan: Custom pricing - Unlimited calls with SLA
+
+Integration Guide:
+To integrate Mojeeb into your application:
+1. Obtain API credentials from the dashboard
+2. Install the Mojeeb SDK for your programming language
+3. Configure authentication using your API key
+4. Make your first API call using the provided examples
+
+Support and Contact:
+For technical support, email: support@mojeeb.ai
+For sales inquiries, email: sales@mojeeb.ai
+Documentation: https://docs.mojeeb.ai
